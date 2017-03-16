@@ -23,7 +23,7 @@ object OSGi {
     OsgiKeys.privatePackage := Seq()
   )
 
-  val parsing = exports(Seq("akka.parboiled2.*", "akka.shapeless.*"),
+  val parsing = exports(Seq("akka.parboiled2.*", "akka.shapeless.*", "akka.macros.*", "akka.parsing.*"),
     imports = Seq(optionalResolution("scala.quasiquotes")))
 
   val httpCore = exports(Seq("akka.http.*"), imports = Seq(scalaJava8CompatImport()))
@@ -41,8 +41,7 @@ object OSGi {
     },
     imports = Seq(
       scalaJava8CompatImport(),
-      akkaImport("akka.stream.*"),
-      akkaImport("akka.parboiled2.*"))
+      akkaImport("akka.stream.*"))
   )
 
   val httpTestkit = exports(Seq("akka.http.scaladsl.testkit.*", "akka.http.javadsl.testkit.*"))
@@ -60,10 +59,17 @@ object OSGi {
     "akka.testkit")
 
   def exports(packages: Seq[String] = Seq(), imports: Seq[String] = Nil) = osgiSettings ++ Seq(
-    OsgiKeys.importPackage := imports ++ scalaVersion(defaultImports).value,
+    OsgiKeys.importPackage := imports ++ version(httpImports).value ++ scalaVersion(defaultImports).value,
     OsgiKeys.exportPackage := packages
   )
   def defaultImports(scalaVersion: String) = Seq("!sun.misc", akkaImport(), configImport(), scalaImport(scalaVersion), "*")
+  def httpImports(akkaHttpVersion: String) = Seq(
+    exactVersionImport("akka.http.*", akkaHttpVersion),
+    exactVersionImport("akka.parboiled2.*", akkaHttpVersion),
+    exactVersionImport("akka.parsing.*", akkaHttpVersion),
+    exactVersionImport("akka.shapeless.*", akkaHttpVersion),
+    exactVersionImport("akka.macros.*", akkaHttpVersion))
+
   def akkaImport(packageName: String = "akka.*") = versionedImport(packageName, Dependencies.akkaVersion, "2.5")
   def configImport(packageName: String = "com.typesafe.config.*") = versionedImport(packageName, "1.3.0", "1.4.0")
   def scalaImport(version: String) = {
@@ -73,8 +79,8 @@ object OSGi {
     versionedImport(packageName, s"$epoch.$major", s"$epoch.${major.toInt+1}")
   }
   def scalaJava8CompatImport(packageName: String = "scala.compat.java8.*") = versionedImport(packageName, "0.7.0", "1.0.0")
-  def scalaParsingCombinatorImport(packageName: String = "scala.util.parsing.combinator.*") = versionedImport(packageName, "1.0.4", "1.1.0")
   def optionalResolution(packageName: String) = "%s;resolution:=optional".format(packageName)
   def versionedImport(packageName: String, lower: String, upper: String) = s"""$packageName;version="[$lower,$upper)""""
+  def exactVersionImport(packageName: String, exactVersion: String) = s"""$packageName;version=$exactVersion"""
 }
 
