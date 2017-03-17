@@ -39,9 +39,7 @@ object OSGi {
     ) flatMap { p =>
       Seq(p.replace("$DSL$", "scaladsl"), p.replace("$DSL$", "javadsl"))
     },
-    imports = Seq(
-      scalaJava8CompatImport(),
-      akkaImport("akka.stream.*"))
+    imports = Seq(scalaJava8CompatImport())
   )
 
   val httpTestkit = exports(Seq("akka.http.scaladsl.testkit.*", "akka.http.javadsl.testkit.*"))
@@ -52,12 +50,15 @@ object OSGi {
 
   val httpJackson = exports(Seq("akka.http.javadsl.marshallers.jackson"))
 
+  val http2Support = exports(Seq("akka.http.scaladsl.*"))
+
   val osgiOptionalImports = Seq(
     // needed because testkit is normally not used in the application bundle,
     // but it should still be included as transitive dependency and used by BundleDelegatingClassLoader
     // to be able to find reference.conf
     "akka.testkit")
 
+  // The akka.http imports must occur in the Import-Package list before the default imports which include all other akka.* imports
   def exports(packages: Seq[String] = Seq(), imports: Seq[String] = Nil) = osgiSettings ++ Seq(
     OsgiKeys.importPackage := imports ++ version(httpImports).value ++ scalaVersion(defaultImports).value,
     OsgiKeys.exportPackage := packages
